@@ -1,0 +1,20 @@
+#!/ms/dist/fsf/PROJ/zsh/4.3.10/bin/zsh
+
+export AUTOSERV=$1
+INST_INFO=( $( cat /ms/dev/jobsched/vendor-ca-r11/incr/src/etc/instance.cfg |grep "^$AUTOSERV" |sed 's/:/ /g' ) )
+
+echo "!$INST_INFO[5]!\n"
+
+if [[ $INST_INFO[5] == '4.5' ]]; then
+    OUT_FILE='event_demon_misc'
+else
+    OUT_FILE='as_server'
+fi
+
+/ms/dev/fsf/tmux/1.4/install/exec/bin/tmux splitw -p 50 "/ms/dev/jobsched/misc/incr/src/sbin/jssh $AUTOSERV --cmd \"tail -f /var/tmp/jobsched/autouser/$AUTOSERV/out/event_demon.$AUTOSERV\""
+/ms/dev/fsf/tmux/1.4/install/exec/bin/tmux selectp -t 1
+/ms/dev/fsf/tmux/1.4/install/exec/bin/tmux splitw -h -l 80 "/ms/dev/jobsched/misc/incr/src/sbin/jssh $AUTOSERV --cmd \"tail -f /var/tmp/jobsched/autouser/$AUTOSERV/out/$OUT_FILE.$AUTOSERV\""
+/ms/dev/fsf/tmux/1.4/install/exec/bin/tmux selectp -t 2
+/ms/dev/fsf/tmux/1.4/install/exec/bin/tmux splitw -p 50 "/ms/dev/jobsched/misc/incr/src/sbin/js_plant_status -c -n -1 $INST_INFO[4]"
+/ms/dev/fsf/tmux/1.4/install/exec/bin/tmux selectp -t 0
+jssh $AUTOSERV

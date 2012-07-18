@@ -1,0 +1,6 @@
+#!/bin/zsh
+
+. /ms/user/m/majoros/.zshrc
+
+/ms/dist/aurora/bin/modulecmd zsh avail 2>&1 |egrep -v -e '---------|not found' | tr "\n" " " > /ms/user/m/majoros/.zsh/auto_compleat/ml.cash
+

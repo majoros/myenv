@@ -1,0 +1,9 @@
+#!/bin/bash
+
+## Cashing the list of modules.
+
+#cd /ms/dist/aurora/etc/modules/
+#find */ |grep -v .version |sed 's/\/$//' | tr "\n" " " > /ms/user/m/majoros/.zsh/auto_compleat/ml.cash
+
+module avail 2>/dev/null |tr "\n" " " > /ms/user/m/majoros/.zsh/auto_compleat/ml.cash
+

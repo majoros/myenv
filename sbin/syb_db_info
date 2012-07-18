@@ -1,0 +1,178 @@
+#!/ms/dist/perl5/bin/perl5.8
+# -*- mode: perl; -*-
+#
+# $Id: js_plant_status,v 1.6 2011/02/17 14:34:34 majoros Exp $
+#
+use strict;
+use warnings;
+
+use MSDW::Version(
+    'syb/sgp'            => '1.0',
+    'DBI'                => '1.609',
+    'DBD-Sybase'         => '1.09-oc15.5.0.01',
+    'Params-Validate'    => '0.91',
+    'Config-Tiny'        => '2.02',
+    'Text-ASCIITable'    => '0.15',
+    'CDB_File'           => '0.96',
+    'Compress-Raw-Zlib'  => '2.015',
+    'Net-SNMP'           => '5.2.0',
+    'Data-Dump'          => '1.14',
+
+
+    'jobsched/monitor'   => 'prod',
+    'jobsched/config'    => 'incr',
+    'jobsched/misc'      => 'incr',
+);
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+
+use Jobsched::Monitor::Dependencies;
+use Jobsched::Monitor::Alert;
+use Jobsched::Monitor::Sybase        qw( :all );
+
+use Jobsched::Instance;
+use Jobsched::Utils::Constants  qw( :log_mappings );
+
+use Net::SNMP;
+use Getopt::Long;
+use File::Basename;
+use Sys::Hostname;
+use Params::Validate qw(:all);
+use Text::ASCIITable;
+use sybGetPrinc qw( sybGetPrinc );
+use Carp;
+
+use Data::Dump qw(dump ddx);
+
+$| = 1;
+
+my %params = ( inst               => $ENV{AUTOSERV},
+               instance_info_file => $ENV{JS_INSTANCE_INFO} || "/ms/dist/jobsched/PROJ/config/incr/etc/instance.cfg",
+               vebose             => 0,
+             );
+
+my $HOSTNAME   = hostname();
+my $SCRIPTNAME = basename($0);
+
+Getopt::Long::Configure( "bundling",
+                         "require_order",
+                         "no_auto_abbrev",
+                         "no_ignore_case"
+                       );
+GetOptions(\%params, qw( inst|i=s
+                         instance_info_file|i=s
+                         database|d=s
+                         sortby|s=s
+                         verbose|v!
+                      ));
+
+my $ii = Jobsched::Instance::parse(
+    File => $params{instance_info_file}
+);
+
+if( ! defined($ii->{'ep'}{ $params{inst}} )){
+        die "Error: Unable to get instance information for [$params{inst}]";
+}
+
+my ($server, $db) = split( /\./, $ii->{'ep'}{ $params{inst} }{db});
+
+
+my $dbh = DBI->connect( sprintf(
+    'dbi:Sybase:server=%s;kerberos=%s;database=%s',
+    $server,
+    sybGetPrinc($server),
+    $db,));
+
+$dbh->{syb_do_proc_status} = 1;
+
+my $dbinfo;
+
+# First check space in the DB:
+my $sth = $dbh->prepare("sp_spaceused");
+$sth->execute;
+do {
+    while(my $d = $sth->fetch) {
+    if($d->[0] =~ /$db/) {
+        $d->[1] =~ s/[^\d.]//g;
+        $dbinfo->{size} = $d->[1];
+    } else {
+        foreach (@$d) {
+        s/\D//g;
+        }
+        $dbinfo->{reserved} = $d->[0] / 1024;
+        $dbinfo->{data} = $d->[1] / 1024;
+        $dbinfo->{index} = $d->[2] / 1024;
+    }
+    }
+} while($sth->{syb_more_results});
+
+# Get the actual device usage from sp_helpdb to get the free log space
+$sth = $dbh->prepare("sp_helpdb $db");
+$sth->execute;
+do {
+    while(my $d = $sth->fetch) {
+    if($d->[2] && $d->[2] =~ /log only/) {
+        $d->[1] =~ s/[^\d\.]//g;
+        $dbinfo->{log} += $d->[1];
+        my ($logfree) = $d->[3] =~ /(\d+)/;
+        $dbinfo->{logfree} += $logfree / 1024;
+    }
+    if($d->[0] =~ /log only .* (\d+)/) {
+        $dbinfo->{logfree} = $1 / 1024;
+    }
+    }
+} while($sth->{syb_more_results});
+
+$dbinfo->{size} -= $dbinfo->{log};
+
+my $usedpct = ($dbinfo->{size} - $dbinfo->{reserved}) / $dbinfo->{size};
+
+print "$server/$db spaceusage report\n\n";
+printf "Database size: %10.2f MB\n", $dbinfo->{size};
+printf "Log size:      %10.2f MB\n", $dbinfo->{log};
+printf "Free Log:      %10.2f MB\n", $dbinfo->{logfree};
+printf "Reserved:      %10.2f MB\n", $dbinfo->{reserved};
+printf "Data:          %10.2f MB\n", $dbinfo->{data};
+printf "Indexes:       %10.2f MB\n", $dbinfo->{index};
+printf "Used space:    %10.2f %%\n", 100 - ($usedpct * 100);
+
+if($usedpct < .75) {
+    printf "**WARNING**: Free space is below 25%% (%.2f%%)\n\n", 100 - ($usedpct * 100);
+}
+
+print "\nTable information (in MB):\n\n";
+printf "%15s %15s %10s %10s %10s\n\n", "Table", "Rows", "Reserved", "Data", "Indexes";
+
+my @tables = getTables($dbh);
+
+foreach (@tables) {
+    my $sth = $dbh->prepare("sp_spaceused $_");
+    $sth->execute;
+    do {
+    while(my $d = $sth->fetch) {
+        foreach (@$d) {
+        s/KB//;
+        s/\s//g;
+        }
+        printf("%15.15s %15d %10.2f %10.2f %10.2f\n",
+           $d->[0], $d->[1], $d->[2] / 1024, $d->[3] / 1024,
+           $d->[4] / 1024);
+    }
+    } while($sth->{syb_more_results});
+}
+
+
+sub getTables {
+    my $dbh = shift;
+
+    my $sth = $dbh->table_info;
+    my @tables;
+    do {
+    while(my $d = $sth->fetch) {
+        push(@tables, $d->[2]) unless $d->[3] =~ /SYSTEM|VIEW/;
+    }
+    } while($sth->{syb_more_results});
+
+    @tables;
+}

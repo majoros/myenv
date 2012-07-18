@@ -1,0 +1,102 @@
+#!/ms/dist/perl5/bin/perl5.8
+#
+# from Victor Duchovni 20090520
+# fix the 'From' header broken by
+# Exchange 2003.
+#
+use IO::File;
+use MSDW::Version
+  'perl-ldap'      => '0.39',
+  'Convert-ASN1'   => '0.22',
+  'Authen-SASL'    => '2.10',
+  'GSSAPI'         => '0.26-1.4',
+  'MSDW-Directory' => '3.2';
+use MSDW::Directory;
+
+use strict;
+use warnings;
+
+my $domains = "/ms/dist/itsmg/PROJ/MTA-Hub/incr/etc/firmwide-domains";
+
+my %ldap_domain;
+
+my $df = IO::File->new($domains, "r") or
+  die "$0: Can't open $domains: $!\n";
+
+while (<$df>) {
+  next if (m{^\s*(#|$)});
+  chomp;
+  my ($d, $rest) = split(" ", $_, 2);
+  $ldap_domain{lc($d)} = 1;
+}
+$df->close() or die "$0: error reading $domains: $!\n";
+
+# Quote LDAP special characters in a input string
+#
+# <http://tools.ietf.org/html/rfc2254#section-4>
+#
+# If a value should contain any of the following characters
+#
+#        Character       ASCII value
+#        ---------------------------
+#        *               0x2a
+#        (               0x28
+#        )               0x29
+#        \               0x5c
+#        NUL             0x00
+#
+# the character must be encoded as the backslash '\' character (ASCII
+# 0x5c) followed by the two hexadecimal digits representing the ASCII
+# value of the encoded character. The case of the two hexadecimal
+# digits is not significant.
+#
+sub rfc2254_quote {
+  my ($q) = @_;
+  $q =~ s/[*()\\\0]/sprintf "\\%02x", ord($&)/eg;
+  return $q;
+}
+
+# RFC 5322 quoted strings, <"> and <\> are special:
+# http://tools.ietf.org/html/rfc5322#section-3.2.4
+#
+sub rfc5322_quote {
+  my ($q) = @_;
+  $q =~ s/["\\]/\\$&/g;
+  return $q;
+}
+
+sub lookup {
+  my ($addr) = @_;
+
+  my $dir = MSDW::Directory->new(
+      host => MSDW::Directory->FWD_PROD_HOST,
+#      dn   => 'uid=lonstein,ou=people,o=morgan stanley',
+      dn => 'msfwid=71087, ou=people,o=morgan stanley',
+      kerberos => 1,
+  );
+
+  my $person = $dir->getPerson ({ EmailAddress => rfc2254_quote($addr) })
+    or return;
+
+  my $fn = $person->getFirstName;
+  my $ln = $person->getLastName;
+  my $bc = $person->getBusinessCategory;
+
+  return rfc5322_quote("$ln, $fn ($bc)");
+}
+
+my $From = qr{From:}i;
+my $WSP = qr{[\t\x20]+};
+my $DNAME = qr{"[A-Z][A-Z\d]*"};
+my $mboxRE = qr{<(.+\@(.+))>};		# $1 == full addr, $2 == domain
+my $FromRE = qr{\A$From $WSP $DNAME $WSP $mboxRE}x;
+
+while (<>) {
+  if (1../^$/ and m{$FromRE}o) {
+    if (exists $ldap_domain{lc($2)} && (my $name = lookup($1))) {
+      $_  = qq{X-Orig-$_};
+      $_ .= qq{From: "$name" <$1>\n};
+    }
+  }
+  print;
+}

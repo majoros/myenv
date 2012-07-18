@@ -1,0 +1,36 @@
+#!/ms/dist/perl5/PROJ/core/5.8.4/bin/perl -wlp
+
+BEGIN {
+    $normal = "\e[0m";
+    $prefix = "\e[1;";
+    $suffix = ";40m";
+    $red = "${prefix}31${suffix}";
+    $green = "${prefix}32${suffix}";
+    $yellow = "${prefix}33${suffix}";
+    $blue = "${prefix}34${suffix}";
+    $cyan = "${prefix}36${suffix}";
+}
+
+# Color class name
+s/((?:\[.*\] ){2}(?:\w+\.)+(?:\w+) \[)(\w+)(\..+\])/$1${cyan}$2${normal}$3/;
+
+s/INFO/${green}$&${normal}/g;
+s/DEBUG/${blue}$&${normal}/g;
+s/WARN(ING)?/${yellow}$&${normal}/g;
+s/ERROR/${red}$&${normal}/g;
+
+# Code red!
+s/\w*?Exception\b/${red}$&${normal}/g;
+s/failed/${red}$&${normal}/ig;
+s/\bexception\b/${red}$&${normal}/ig;
+s/\binvalid\b/${red}$&${normal}/ig;
+s/\bproblems?\b/${red}$&${normal}/ig;
+s/\bunable\b/${red}$&${normal}/ig;
+
+# Oh oh
+s/(re)?trying/${yellow}$&${normal}/ig;
+
+# All is well
+s/initiali(zing|sed)/${green}$&${normal}/ig;
+s/adding/${green}$&${normal}/ig;
+s/registered/${green}$&${normal}/ig;
