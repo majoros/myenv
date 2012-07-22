@@ -1,4 +1,4 @@
-#!/ms/dist/perl5/PROJ/core/5.8/bin/perl
+#!/usr/bin/perl
 
 # usage: cmd | $0 [-silent] | cmd
 

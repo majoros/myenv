@@ -1,6 +1,4 @@
-#!/ms/dist/fsf/PROJ/zsh/4.3.10/bin/zsh
-
-export PATH=//ms/dev/fsf/tmux/1.4/install/exec/bin:$PATH
+#!/usr/bin/zsh
 
 tmux list-panes| cut -d : -f 1| sort -nr | while read P
 do

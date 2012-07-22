@@ -1,5 +1,0 @@
-#!/bin/sh
-PAGER="col -b | view -c 'set ft=man nomod nolist' - "
-export PAGER
-man $*
-
