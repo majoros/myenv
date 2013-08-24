@@ -24,6 +24,7 @@ LINKS = (
     (REPO_T, "{env}/dotfiles", 		                 ".dotfiles"),
     (REPO_T, "{env}/vim",         	                 ".vim"),
     (REPO_T, "{env}/sbin",         	                 "sbin"),
+    (REPO_T, "{env}/zsh",         	                 ".zsh"),
     (FILE_T, "{dotfiles}/zshrc",                     ".zshrc"),
     (FILE_T, "{dotfiles}/tmux.conf",                 ".tmux.conf"),
     (FILE_T, "{vim}/vimrc",                          ".vimrc"),
@@ -38,7 +39,9 @@ def main():
     env_root = os.environ['ENV_ROOT']
     home = os.environ['HOME']
     home = home if home.endswith('/') else home + '/'
-    relative_env_root = re.sub(home, "", env_root)
+    print home
+    #relative_env_root = re.sub(home, "", env_root)
+    relative_env_root = env_root
     os.chdir(home)
 
     for link_type, src, target in LINKS:
