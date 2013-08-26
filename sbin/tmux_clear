@@ -1,8 +1,0 @@
-#!/usr/bin/zsh
-
-tmux list-panes| cut -d : -f 1| sort -nr | while read P
-do
-    if (($P > 0)) {
-        tmux kill-pane -t $P
-    }
-done
