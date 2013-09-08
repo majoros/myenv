@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python2.7
 
 # This script is meant to check my home directory to ensure that all the various
 # symlinks that make up my environment are there.  Its purpose is to sort of
@@ -16,66 +16,104 @@ import re
 
 from optparse import OptionParser
 
-REPO_T = 0
-FILE_T = 1
 
-LINKS = (
-    # src   target
-    (REPO_T, "{env}/dotfiles", 		                 ".dotfiles"),
-    (REPO_T, "{env}/vim",         	                 ".vim"),
-    (REPO_T, "{env}/sbin",         	                 "sbin"),
-    (REPO_T, "{env}/zsh",         	                 ".zsh"),
-    (FILE_T, "{dotfiles}/zshrc",                     ".zshrc"),
-    (FILE_T, "{dotfiles}/tmux.conf",                 ".tmux.conf"),
-    (FILE_T, "{vim}/vimrc",                          ".vimrc"),
-)
 
-def main():
-    p = OptionParser()
-    p.add_option("-u", "--update", dest="update",
-                 action="store_true", help="Update symlinks")
-    (opts, args) = p.parse_args()
+class BuildEnv:
 
-    env_root = os.environ['ENV_ROOT']
-    home = os.environ['HOME']
-    home = home if home.endswith('/') else home + '/'
-    print home
-    #relative_env_root = re.sub(home, "", env_root)
-    relative_env_root = env_root
-    os.chdir(home)
+    LINK_T = 0
+    DIR_T = 1
 
-    for link_type, src, target in LINKS:
-        if link_type == REPO_T:
-            link_type_str = "Repo"
-            src = src.format(env=relative_env_root)
-            # Set the variable to the value of target
-            # i.e. set the variable 'dotfiles' to the value '.dotfiles'
-            # This is necessary for validating the other links below
-            globals()[target[1:]] = target
+    def __init__( self,
+        data,
+        replace = dict(),
+       update = False,
+  home = os.environ['HOME']):
+
+        self.update = update
+        self.data = data
+        self.replace = replace
+        self.home = home if home.endswith('/') else home + '/'
+
+        self.dispatch = {
+            self.LINK_T: BuildEnv._create_symlink,
+            self.DIR_T: BuildEnv._create_dir
+        }
+
+        os.chdir(home)
+
+    def build(self):
+        for link_type, src, target in self.data:
+            src = src.format(**self.replace)
+
+            self.dispatch[link_type](self,
+                    src,
+                    target)
+
+    def _create_dir( self, src, mode):
+        if os.path.isdir(src):
+            if self.update:
+                #print "Updating mode of %s" % (src)
+                os.chmod(src, mode)
         else:
-            link_type_str = "File"
-            src = src.format(dotfiles=dotfiles, vim=vim)
+            if self.update:
+                print "Creating dir %s" % (src)
+                os.makedirs(src, int(mode))
+            else:
+                print "Directory %s is missing" % src
 
-            # prepend ../ for each additional component in target
-            # i.e. .xmonad/xmonad.hs should point to ../.dotfiles/xmonad.hs, not .dotfiles/xmonad.hs
-            if os.path.dirname(target) != "":
-                for component in os.path.split(target)[:-1]:
-                    src = "../{s}".format(s=src)
-
+    def _create_symlink( self, src, target):
         if os.path.exists(target):
-            actual_src = os.readlink("%s/%s" % (home, target))
+            actual_src = os.readlink("%s/%s" % (self.home, target))
             if actual_src != src:
-                print "%s symlink incorrect: %s -> %s, should be: %s" % (link_type_str, target, actual_src, src)
-                if opts.update:
+                print "Symlink incorrect: %s -> %s, should be: %s" % (target, actual_src, src)
+                if self.update:
                     print "Fixing ... %s -> %s" % (target, src)
                     os.unlink(target)
                     os.symlink(src, target)
         else:
-            if opts.update:
+            if self.update:
                 print "Creating ... %s -> %s" % (target, src)
                 os.symlink(src, target)
             else:
                 print "%s symlink does not exist: %s" % (link_type_str, target)
 
 if __name__ == "__main__":
-    main()
+    p = OptionParser()
+
+    p.add_option("-u", "--update", dest="update",
+                 action="store_true", help="Update symlinks")
+
+    p.add_option("-e", "--env_root", dest="env_root",
+                 default = os.environ['ENV_ROOT'],
+                 help="Update symlinks")
+
+    (opts, args) = p.parse_args()
+
+    DATA = (
+        # type src   target
+        (BuildEnv.LINK_T, "{env}/dotfiles", ".dotfiles"),
+        (BuildEnv.LINK_T, "{env}/vim", ".vim"),
+        (BuildEnv.LINK_T, "{env}/sbin", "sbin"),
+        (BuildEnv.LINK_T, "{env}/terminfo", ".terminfo"),
+        (BuildEnv.LINK_T, "{env}/dotfiles/zsh", ".zsh"),
+        (BuildEnv.LINK_T, ".dotfiles/zshrc", ".zshrc"),
+        (BuildEnv.LINK_T, ".dotfiles/muttrc", ".muttrc"),
+        (BuildEnv.LINK_T, ".dotfiles/tmux.conf", ".tmux.conf"),
+        (BuildEnv.LINK_T, ".vim/vimrc", ".vimrc"),
+        (BuildEnv.DIR_T, "{local_home}/vim", 0700),
+        (BuildEnv.DIR_T, "{local_home}/vim/swap", 0700),
+        (BuildEnv.DIR_T, "{local_home}/backup", 0700),
+        (BuildEnv.DIR_T, "{remote_home}/zsh/history", 0700),
+    )
+
+    REPLACE = {
+        'env': opts.env_root,
+        'dotfiles': os.path.join(opts.env_root, 'dotfiles'),
+        'vim': os.path.join(opts.env_root, 'vim'),
+        'local_home':  "/var/tmp/.majoros_env",
+        'remote_home': "~/.env"
+    }
+
+    env = BuildEnv(DATA, REPLACE, update = opts.update)
+    env.build()
+
