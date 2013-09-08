@@ -1,14 +1,16 @@
 #!/usr/bin/python2.7
 
-# This script is meant to check my home directory to ensure that all the various
-# symlinks that make up my environment are there.  Its purpose is to sort of
-# "audit" a given system to ensure everything is setup the way it should be.
+"""
+This script is meant to check my home directory to ensure that all the various
+symlinks that make up my environment are there.  Its purpose is to sort of
+"audit" a given system to ensure everything is setup the way it should be.
 
-# Note that the convention I use is that the symlink is the same name as the
-# file in this repository, but with a "." prepended.  And the symlinks are
-# relative
-#
-# i.e. ${HOME}/.bashrc -> ${ENV_ROOT}/dotfiles/bashrc
+Note that the convention I use is that the symlink is the same name as the
+file in this repository, but with a "." prepended.  And the symlinks are
+relative
+
+i.e. ${HOME}/.bashrc -> ${ENV_ROOT}/dotfiles/bashrc
+"""
 
 import os
 import sys
@@ -26,8 +28,8 @@ class BuildEnv:
     def __init__( self,
         data,
         replace = dict(),
-       update = False,
-  home = os.environ['HOME']):
+        update = False,
+        home = os.environ['HOME']):
 
         self.update = update
         self.data = data
@@ -65,7 +67,8 @@ class BuildEnv:
         if os.path.exists(target):
             actual_src = os.readlink("%s/%s" % (self.home, target))
             if actual_src != src:
-                print "Symlink incorrect: %s -> %s, should be: %s" % (target, actual_src, src)
+                print "Symlink incorrect: %s -> %s, should be: %s"\
+                        % (target, actual_src, src)
                 if self.update:
                     print "Fixing ... %s -> %s" % (target, src)
                     os.unlink(target)
@@ -75,19 +78,19 @@ class BuildEnv:
                 print "Creating ... %s -> %s" % (target, src)
                 os.symlink(src, target)
             else:
-                print "%s symlink does not exist: %s" % (link_type_str, target)
+                print "%s symlink does not exist: %s" % (src, target)
 
 if __name__ == "__main__":
-    p = OptionParser()
+    PARGS = OptionParser()
 
-    p.add_option("-u", "--update", dest="update",
+    PARGS.add_option("-u", "--update", dest="update",
                  action="store_true", help="Update symlinks")
 
-    p.add_option("-e", "--env_root", dest="env_root",
+    PARGS.add_option("-e", "--env_root", dest="env_root",
                  default = os.environ['ENV_ROOT'],
                  help="Update symlinks")
 
-    (opts, args) = p.parse_args()
+    (OPTS, ARGS) = PARGS.parse_args()
 
     DATA = (
         # type src   target
@@ -107,13 +110,13 @@ if __name__ == "__main__":
     )
 
     REPLACE = {
-        'env': opts.env_root,
-        'dotfiles': os.path.join(opts.env_root, 'dotfiles'),
-        'vim': os.path.join(opts.env_root, 'vim'),
+        'env': OPTS.env_root,
+        'dotfiles': os.path.join(OPTS.env_root, 'dotfiles'),
+        'vim': os.path.join(OPTS.env_root, 'vim'),
         'local_home':  "/var/tmp/.majoros_env",
         'remote_home': "~/.env"
     }
 
-    env = BuildEnv(DATA, REPLACE, update = opts.update)
-    env.build()
+    ENV = BuildEnv(DATA, REPLACE, update = OPTS.update)
+    ENV.build()
 
