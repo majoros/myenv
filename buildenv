@@ -58,27 +58,29 @@ class BuildEnv:
                 os.chmod(src, mode)
         else:
             if self.update:
-                print "Creating dir %s" % (src)
+                print("Creating dir {0}".format(src))
                 os.makedirs(src, int(mode))
             else:
-                print "Directory %s is missing" % src
+                print("Directory {0} is missing".format(src))
 
     def _create_symlink( self, src, target):
         if os.path.exists(target):
-            actual_src = os.readlink("%s/%s" % (self.home, target))
+            actual_src = os.readlink(os.path.join(self.home, target))
             if actual_src != src:
-                print "Symlink incorrect: %s -> %s, should be: %s"\
-                        % (target, actual_src, src)
+                print("Symlink incorrect: {0} -> {1}, should be: {2}".format(
+                        target,
+                        actual_src,
+                        src))
                 if self.update:
-                    print "Fixing ... %s -> %s" % (target, src)
+                    print("Fixing ... {0} -> {1}".format(target, src))
                     os.unlink(target)
                     os.symlink(src, target)
         else:
             if self.update:
-                print "Creating ... %s -> %s" % (target, src)
+                print("Creating ... {0} -> {1}".format(target, src))
                 os.symlink(src, target)
             else:
-                print "%s symlink does not exist: %s" % (src, target)
+                print("{0} symlink does not exist: {1}".format(src, target))
 
 if __name__ == "__main__":
     PARGS = OptionParser()
@@ -87,7 +89,7 @@ if __name__ == "__main__":
                  action="store_true", help="Update symlinks")
 
     PARGS.add_option("-e", "--env_root", dest="env_root",
-                 default = os.environ['ENV_ROOT'],
+                 default = os.getenv('ENV_ROOT', os.getcwd()),
                  help="Update symlinks")
 
     (OPTS, ARGS) = PARGS.parse_args()
@@ -103,10 +105,10 @@ if __name__ == "__main__":
         (BuildEnv.LINK_T, ".dotfiles/muttrc", ".muttrc"),
         (BuildEnv.LINK_T, ".dotfiles/tmux.conf", ".tmux.conf"),
         (BuildEnv.LINK_T, ".vim/vimrc", ".vimrc"),
-        (BuildEnv.DIR_T, "{local_home}/vim", 0700),
-        (BuildEnv.DIR_T, "{local_home}/vim/swap", 0700),
-        (BuildEnv.DIR_T, "{local_home}/backup", 0700),
-        (BuildEnv.DIR_T, "{remote_home}/zsh/history", 0700),
+        (BuildEnv.DIR_T, "{local_home}/vim", 0x700),
+        #(BuildEnv.DIR_T, "{local_home}/vim/swap", 0x700),
+        (BuildEnv.DIR_T, "{local_home}/backup", 0x700),
+        (BuildEnv.DIR_T, "{remote_home}/zsh/history", 0x700),
     )
 
     REPLACE = {
