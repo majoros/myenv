@@ -15,6 +15,7 @@ i.e. ${HOME}/.bashrc -> ${ENV_ROOT}/dotfiles/bashrc
 import os
 import sys
 import re
+import urllib.request
 
 from optparse import OptionParser
 
@@ -24,6 +25,7 @@ class BuildEnv:
 
     LINK_T = 0
     DIR_T = 1
+    DOWNLOAD_T = 2
 
     def __init__( self,
         data,
@@ -38,7 +40,8 @@ class BuildEnv:
 
         self.dispatch = {
             self.LINK_T: BuildEnv._create_symlink,
-            self.DIR_T: BuildEnv._create_dir
+            self.DIR_T: BuildEnv._create_dir,
+            self.DOWNLOAD_T: BuildEnv._download_file,
         }
 
         os.chdir(home)
@@ -82,6 +85,19 @@ class BuildEnv:
             else:
                 print("{0} symlink does not exist: {1}".format(src, target))
 
+    def _download_file(self, file, url):
+
+        dir = os.path.dirname(file)
+        os.makedirs(dir, exist_ok=True)
+        if self.update:
+            print("Creating ... {0} -> {1}".format(url, file))
+            with urllib.request.urlopen(url) as rfh:
+                with open(file, 'w+') as lfh:
+                    lfh.write(rfh.read().decode('utf-8'))
+        else:
+            if not os.path.exists(file):
+                print("Missing ... {0} -> {1}".format(url, file))
+
 if __name__ == "__main__":
     PARGS = OptionParser()
 
@@ -105,17 +121,18 @@ if __name__ == "__main__":
         (BuildEnv.LINK_T, ".dotfiles/muttrc", ".muttrc"),
         (BuildEnv.LINK_T, ".dotfiles/tmux.conf", ".tmux.conf"),
         (BuildEnv.LINK_T, ".vim/vimrc", ".vimrc"),
-        (BuildEnv.DIR_T, "{local_home}/vim", 0x700),
-        #(BuildEnv.DIR_T, "{local_home}/vim/swap", 0x700),
-        (BuildEnv.DIR_T, "{local_home}/backup", 0x700),
-        (BuildEnv.DIR_T, "{remote_home}/zsh/history", 0x700),
+        (BuildEnv.DIR_T, "{local_home}/vim", 0o700),
+        (BuildEnv.DIR_T, "{local_home}/vim/swap", 0o755),
+        (BuildEnv.DIR_T, "{local_home}/backup", 0o700),
+        (BuildEnv.DIR_T, "{remote_home}/zsh/history", 0o700),
+        (BuildEnv.DOWNLOAD_T, ".vim/autoload/plug.vim", "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"),
     )
 
     REPLACE = {
         'env': OPTS.env_root,
         'dotfiles': os.path.join(OPTS.env_root, 'dotfiles'),
         'vim': os.path.join(OPTS.env_root, 'vim'),
-        'local_home':  "/var/tmp/.majoros_env",
+        'local_home':  "/var/tmp/.major_env",
         'remote_home': "~/.env"
     }
 
