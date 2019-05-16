@@ -9,6 +9,9 @@ call plug#begin('~/.vim/plugged')
 Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
 Plug 'micha/vim-colors-solarized'
 Plug 'scrooloose/syntastic'
+Plug 'python-mode/python-mode', { 'branch': 'develop' }
+Plug 'lifepillar/vim-solarized8'
+Plug 'nathanaelkane/vim-indent-guides'
 call plug#end()
 
 " Remap Esc so I don't have remove my hand from the home row
@@ -53,8 +56,8 @@ set timeoutlen=500
 set ttimeoutlen=500
 
 " Colors ***********************************************************************
-let g:solarized_termcolors = 16
-let g:solarized_termtrans = 1
+"let g:solarized_termcolors = 16
+"let g:solarized_termtrans = 1
 "let g:solarized_degrade   = 0
 "let g:solarized_bold      = 0
 "let g:solarized_underline = 0
@@ -62,18 +65,11 @@ let g:solarized_termtrans = 1
 " let g:solarized_contrast  = "low"
 "let g:solarized_visibility = "low"
 
-syntax enable
 set term=screen-256color
-set t_Co=256
+"set t_Co=256
+set background=dark
 syntax on " syntax highlighting
-
-if &term =~ ".*256color"
-    "colorscheme xoria256
-    set bg=dark
-    colorscheme solarized
-else
-    colorscheme ir_black
-endif
+colorscheme solarized8
 
 " Want to make sure the bad space highlighting is not overwritten.
 autocmd ColorScheme * highlight ExtraWhitespace ctermbg=red guibg=red
@@ -141,6 +137,14 @@ set statusline+=[LEN=%L]             "Length of the file
 autocmd cursorhold,bufwritepost * unlet! b:statusline_tab_warning
 autocmd cursorhold,bufwritepost * unlet! b:statusline_trailing_space_warning
 
+let g:indent_guides_enable_on_vim_startup = 1
+let g:indent_guides_guide_size = 1
+let g:indent_guides_auto_colors = 0
+let g:indent_guides_start_level = 2
+autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd  guibg=235 ctermbg=235
+autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=236 ctermbg=236
+
+
 function! StatuslineTrailingSpaceWarning()
     if !exists("b:statusline_trailing_space_warning")
         if search('\s\+$', 'nw') != 0
@@ -188,8 +192,8 @@ let perl_nofold_packages=1
 
 " Directories ******************************************************************
 " TODO: check to make sure they exist and create them if they do not.
-set directory=/var/tmp/.majoros_env/vim/swap
-set backupdir=/var/tmp/.majoros_env/vim/backup
+set directory=/var/tmp/.major_env/vim/swap
+set backupdir=/var/tmp/.major_env/vim/backup
 set backup
 
 " Spell check  *****************************************************************

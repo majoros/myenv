@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/env python
 
 """
 This script is meant to check my home directory to ensure that all the various
@@ -122,8 +122,8 @@ if __name__ == "__main__":
         (BuildEnv.LINK_T, ".dotfiles/tmux.conf", ".tmux.conf"),
         (BuildEnv.LINK_T, ".vim/vimrc", ".vimrc"),
         (BuildEnv.DIR_T, "{local_home}/vim", 0o700),
-        (BuildEnv.DIR_T, "{local_home}/vim/swap", 0o755),
-        (BuildEnv.DIR_T, "{local_home}/backup", 0o700),
+        (BuildEnv.DIR_T, "{local_home}/vim/swap", 0o700),
+        (BuildEnv.DIR_T, "{local_home}/vim/backup", 0o700),
         (BuildEnv.DIR_T, "{remote_home}/zsh/history", 0o700),
         (BuildEnv.DOWNLOAD_T, ".vim/autoload/plug.vim", "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"),
     )
