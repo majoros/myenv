@@ -14,6 +14,8 @@ Plug 'lifepillar/vim-solarized8'
 Plug 'nathanaelkane/vim-indent-guides'
 call plug#end()
 
+set rtp+=/usr/lib/python3.7/site-packages/powerline/bindings/vim/
+
 " Remap Esc so I don't have remove my hand from the home row
 imap jj <Esc>
 
@@ -97,10 +99,10 @@ set showtabline=0
 "hi User1 ctermbg=9 ctermfg=0 guibg=9 guifg=0
 "hi User2 ctermbg=22 ctermfg=40 guibg=22 guifg=51
 
-set statusline=                      " clear out the status line.
-set statusline+=[%R%M]               "File flags
-set statusline+=\%{Get_nice_path()}  "Nicely formating full path of file
-set statusline+=%=%h%w\              "Right justify
+"set statusline=                      " clear out the status line.
+"set statusline+=[%R%M]               "File flags
+"set statusline+=\%{Get_nice_path()}  "Nicely formating full path of file
+"set statusline+=%=%h%w\              "Right justify
 
 " IS SYNTACTIC!! TODO: add syntactic back.
 "set statusline+=%#warningmsg#
@@ -108,34 +110,34 @@ set statusline+=%=%h%w\              "Right justify
 "set statusline+=%*
 
 " I *REALLY* don't line trailing whitespace.
-set statusline+=%1*
-set statusline+=%{StatuslineTrailingSpaceWarning()}
-set statusline+=%*
+"set statusline+=%1*
+"set statusline+=%{StatuslineTrailingSpaceWarning()}
+"set statusline+=%*
+"
+"" I like mixed whitespace even less then trailing white space.
+"set statusline+=%1*
+"set statusline+=%{StatuslineTabWarning()}
+"set statusline+=%*
+"
+"set statusline+=[FORMAT=%{&ff}]     "file format
+"set statusline+=[TYPE=%Y]           "file type
+"set statusline+=[ASCII=\%04.3b]     "decimal value of the char the cursor is on.
+"set statusline+=[HEX=\%02.2B]       "HEX value of the char the cursor is on.
+"
+"" Cursor position
+"set statusline+=[POS=                "Start
+"set statusline+=%2*                  "Line
+"set statusline+=%04l                 "Line
+"set statusline+=%*                   "Line
+"set statusline+=,
+"set statusline+=%04v                 "Char
+"set statusline+=]                    "end
+"
+"set statusline+=[%02p%%]             "Percent through the file
+"set statusline+=[LEN=%L]             "Length of the file
 
-" I like mixed whitespace even less then trailing white space.
-set statusline+=%1*
-set statusline+=%{StatuslineTabWarning()}
-set statusline+=%*
-
-set statusline+=[FORMAT=%{&ff}]     "file format
-set statusline+=[TYPE=%Y]           "file type
-set statusline+=[ASCII=\%04.3b]     "decimal value of the char the cursor is on.
-set statusline+=[HEX=\%02.2B]       "HEX value of the char the cursor is on.
-
-" Cursor position
-set statusline+=[POS=                "Start
-set statusline+=%2*                  "Line
-set statusline+=%04l                 "Line
-set statusline+=%*                   "Line
-set statusline+=,
-set statusline+=%04v                 "Char
-set statusline+=]                    "end
-
-set statusline+=[%02p%%]             "Percent through the file
-set statusline+=[LEN=%L]             "Length of the file
-
-autocmd cursorhold,bufwritepost * unlet! b:statusline_tab_warning
-autocmd cursorhold,bufwritepost * unlet! b:statusline_trailing_space_warning
+"autocmd cursorhold,bufwritepost * unlet! b:statusline_tab_warning
+"autocmd cursorhold,bufwritepost * unlet! b:statusline_trailing_space_warning
 
 let g:indent_guides_enable_on_vim_startup = 1
 let g:indent_guides_guide_size = 1
