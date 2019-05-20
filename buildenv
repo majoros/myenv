@@ -12,10 +12,12 @@ relative
 i.e. ${HOME}/.bashrc -> ${ENV_ROOT}/dotfiles/bashrc
 """
 
+import shutil
 import os
 import sys
 import re
 import urllib.request
+import subprocess
 
 from optparse import OptionParser
 
@@ -26,6 +28,7 @@ class BuildEnv:
     LINK_T = 0
     DIR_T = 1
     DOWNLOAD_T = 2
+    EXECUTE_T = 3
 
     def __init__( self,
         data,
@@ -42,22 +45,32 @@ class BuildEnv:
             self.LINK_T: BuildEnv._create_symlink,
             self.DIR_T: BuildEnv._create_dir,
             self.DOWNLOAD_T: BuildEnv._download_file,
+            self.EXECUTE_T: BuildEnv._execute,
         }
 
         os.chdir(home)
 
     def build(self):
-        for link_type, src, target in self.data:
-            src = src.format(**self.replace)
+        for tmp in self.data:
+            action_type = tmp[0]
+            args = list()
+            # FIXME: make recursive
+            for arg in tmp[1:]:
+                if hasattr(arg, 'format'):
+                    args.append(arg.format(**self.replace))
+                elif isinstance(arg, list):
+                    for i, subarg in enumerate(arg):
+                        if hasattr(subarg, 'format'):
+                            arg[i] = arg[i].format(**self.replace)
+                    args.append(arg)
+                else:
+                    args.append(arg)
 
-            self.dispatch[link_type](self,
-                    src,
-                    target)
+            self.dispatch[action_type](self, *args)
 
     def _create_dir( self, src, mode):
         if os.path.isdir(src):
             if self.update:
-                #print "Updating mode of %s" % (src)
                 os.chmod(src, mode)
         else:
             if self.update:
@@ -67,7 +80,12 @@ class BuildEnv:
                 print("Directory {0} is missing".format(src))
 
     def _create_symlink( self, src, target):
-        if os.path.exists(target):
+        full_target = os.path.join(self.home, target)
+        if os.path.isdir(full_target) and not os.path.islink(full_target):
+            shutil.rmtree(full_target,)
+        if os.path.isfile(full_target) and not os.path.islink(full_target):
+            os.unlink(full_target)
+        if os.path.islink(full_target):
             actual_src = os.readlink(os.path.join(self.home, target))
             if actual_src != src:
                 print("Symlink incorrect: {0} -> {1}, should be: {2}".format(
@@ -87,16 +105,28 @@ class BuildEnv:
 
     def _download_file(self, file, url):
 
-        dir = os.path.dirname(file)
-        os.makedirs(dir, exist_ok=True)
+        full_dir = os.path.join(self.home, os.path.dirname(file))
+        full_file = os.path.join(self.home, file)
+        os.makedirs(full_dir, exist_ok=True)
         if self.update:
-            print("Creating ... {0} -> {1}".format(url, file))
+            print("Creating ... {0} -> {1}".format(url, full_file))
             with urllib.request.urlopen(url) as rfh:
-                with open(file, 'w+') as lfh:
+                if os.path.exists(full_file):
+                    os.unlink(full_file)
+                with open(full_file, 'w+') as lfh:
                     lfh.write(rfh.read().decode('utf-8'))
         else:
-            if not os.path.exists(file):
-                print("Missing ... {0} -> {1}".format(url, file))
+            if not os.path.exists(full_file):
+                print("Missing ... {0} -> {1}".format(url, full_file))
+
+    def _execute(self, command):
+        if self.update:
+            print("Executing ... {0}".format(' '.join(command)))
+            subprocess.call(command)
+        else:
+            print("Would execute ... {0}".format(' '.join(command)))
+
+
 
 if __name__ == "__main__":
     PARGS = OptionParser()
@@ -117,15 +147,18 @@ if __name__ == "__main__":
         (BuildEnv.LINK_T, "{env}/sbin", "sbin"),
         (BuildEnv.LINK_T, "{env}/terminfo", ".terminfo"),
         (BuildEnv.LINK_T, "{env}/dotfiles/zsh", ".zsh"),
-        (BuildEnv.LINK_T, ".dotfiles/zshrc", ".zshrc"),
-        (BuildEnv.LINK_T, ".dotfiles/muttrc", ".muttrc"),
-        (BuildEnv.LINK_T, ".dotfiles/tmux.conf", ".tmux.conf"),
-        (BuildEnv.LINK_T, ".vim/vimrc", ".vimrc"),
+        (BuildEnv.LINK_T, "{env}/dotfiles/powerline", ".config/powerline"),
+        (BuildEnv.LINK_T, "{env}/dotfiles/zshrc", ".zshrc"),
+        (BuildEnv.LINK_T, "{env}/dotfiles/muttrc", ".muttrc"),
+        (BuildEnv.LINK_T, "{env}/dotfiles/tmux.conf", ".tmux.conf"),
+        (BuildEnv.LINK_T, "{env}/vim/vimrc", ".vimrc"),
         (BuildEnv.DIR_T, "{local_home}/vim", 0o700),
         (BuildEnv.DIR_T, "{local_home}/vim/swap", 0o700),
         (BuildEnv.DIR_T, "{local_home}/vim/backup", 0o700),
         (BuildEnv.DIR_T, "{remote_home}/zsh/history", 0o700),
         (BuildEnv.DOWNLOAD_T, ".vim/autoload/plug.vim", "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"),
+        (BuildEnv.EXECUTE_T, ["{env}/submodules/powerline/fonts/install.sh"]),
+        (BuildEnv.EXECUTE_T, ["vim", "+PlugInstall", "+qall", "+silent!"]),
     )
 
     REPLACE = {

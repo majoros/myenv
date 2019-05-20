@@ -7,7 +7,7 @@ export BUNDLE_ROOT_STR="${BUNDLE_ROOT}/{}"
 
 
 # Colors ----------------------------------------------------------
-export TERM=screen-256color
+export TERM=tmux-256color
 
 # Editors ----------------------------------------------------------
 export EDITOR='vim'
