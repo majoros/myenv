@@ -16,13 +16,14 @@ export GIT_EDITOR='vim'
 export FB_EDITOR='vim -X'
 export PAGER=less
 export VISUAL=less
-export LESS='-M -S'
+export LESS=eFRX
 
 # Locale's ---------------------------------------------------------
 
 export LC_ALL="en_US.UTF-8"
 
 # Misc -------- ----------------------------------------------------
+# Vim mode
 bindkey -v
 #set term -blength 0
 #set bell-style none
