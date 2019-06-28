@@ -14,6 +14,10 @@ Plug 'lifepillar/vim-solarized8'
 Plug 'nathanaelkane/vim-indent-guides'
 call plug#end()
 
+python3 from powerline.vim import setup as powerline_setup
+python3 powerline_setup()
+python3 del powerline_setup
+
 set rtp+=/usr/local/lib/python3.7/dist-packages/powerline/bindings/vim
 
 " Remap Esc so I don't have remove my hand from the home row
@@ -34,6 +38,8 @@ set hidden
 
 " Syntastic stuff ********************************************************************
 let g:syntastic_python_checkers=['pylint']
+let g:syntastic_python_pylint_post_args="--max-line-length=120"
+let g:pymode_lint_ignore = "E501,W"
 
 " Bufexplorer  stuff  *********************************************************************
 let g:bufExplorerDetailedHelp = 1
@@ -66,6 +72,7 @@ set ttimeoutlen=500
 "let g:solarized_italic    = 0
 " let g:solarized_contrast  = "low"
 "let g:solarized_visibility = "low"
+"
 
 let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
 let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
@@ -251,6 +258,8 @@ autocmd FileType make set noexpandtab shiftwidth=8
 
 autocmd BufNewFile,BufRead *.jil set filetype=jil
 
+" Overriding pymode colorcolumn
+:au BufEnter *.* :set colorcolumn=120
 
 " Key mapping ******************************************************************
 " Keep search matches in the middle of the window.
@@ -280,6 +289,7 @@ imap aa @
 " make wrapped lines easer to navigate.
 noremap j gj
 noremap k gk
+
 
 " Startup **********************************************************************
 " only want NERDTree if I don't pass in a file to edit.
