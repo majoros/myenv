@@ -148,7 +148,6 @@ if __name__ == "__main__":
         (BuildEnv.LINK_T, "{env}/terminfo", ".terminfo"),
         (BuildEnv.LINK_T, "{env}/dotfiles/zsh", ".zsh"),
         (BuildEnv.LINK_T, "{env}/dotfiles/powerline", ".config/powerline"),
-        (BuildEnv.LINK_T, "{env}/dotfiles/kitty.conf", ".config/kitty/kitty.conf"),
         (BuildEnv.LINK_T, "{env}/dotfiles/zshrc", ".zshrc"),
         (BuildEnv.LINK_T, "{env}/dotfiles/muttrc", ".muttrc"),
         (BuildEnv.LINK_T, "{env}/dotfiles/tmux.conf", ".tmux.conf"),

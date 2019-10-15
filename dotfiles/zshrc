@@ -5,9 +5,11 @@ export DOTFILES_ROOT="${ENV_ROOT}/.dotfiles"
 export BUNDLE_ROOT="${ENV_ROOT}/bundles"
 export BUNDLE_ROOT_STR="${BUNDLE_ROOT}/{}"
 
+# Servers -----------------------------------------------------------
+export SERVER_CM='cmajoros01.c01.gen.disney.jfk3.dev.bamtech.co'
 
 # Colors ----------------------------------------------------------
-export TERM=tmux-256color
+export TERM=xterm-256color
 
 # Editors ----------------------------------------------------------
 export EDITOR='vim'
