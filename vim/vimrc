@@ -197,8 +197,8 @@ let perl_nofold_packages=1
 
 " Directories ******************************************************************
 " TODO: check to make sure they exist and create them if they do not.
-set directory=/var/tmp/.major_env/vim/swap
-set backupdir=/var/tmp/.major_env/vim/backup
+set directory=/var/tmp/.${USER}_env/vim/swap
+set backupdir=/var/tmp/.${USER}_env/vim/backup
 set backup
 
 " Spell check  *****************************************************************
