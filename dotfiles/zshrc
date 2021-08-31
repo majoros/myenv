@@ -1,5 +1,5 @@
-
 # Important variable setting --------------------------------------------------
+
 export ENV_ROOT="${HOME}/git/myenv"
 export DOTFILES_ROOT="${ENV_ROOT}/.dotfiles"
 export BUNDLE_ROOT="${ENV_ROOT}/bundles"

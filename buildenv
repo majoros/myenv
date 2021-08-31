@@ -152,6 +152,7 @@ if __name__ == "__main__":
         (BuildEnv.LINK_T, "{env}/dotfiles/muttrc", ".muttrc"),
         (BuildEnv.LINK_T, "{env}/dotfiles/tmux.conf", ".tmux.conf"),
         (BuildEnv.LINK_T, "{env}/dotfiles/pylintrc", ".pylintrc"),
+        (BuildEnv.LINK_T, "{env}/dotfiles/mypy", ".config/mypy"),
         (BuildEnv.LINK_T, "{env}/vim/vimrc", ".vimrc"),
         (BuildEnv.DIR_T, "{local_home}/vim", 0o700),
         (BuildEnv.DIR_T, "{local_home}/vim/swap", 0o700),

@@ -14,13 +14,14 @@ Plug 'scrooloose/syntastic'
 Plug 'python-mode/python-mode', { 'branch': 'develop' }
 Plug 'lifepillar/vim-solarized8'
 Plug 'nathanaelkane/vim-indent-guides'
+"nPlug 'kiteco/plugins'
 call plug#end()
 
-python3 from powerline.vim import setup as powerline_setup
-python3 powerline_setup()
-python3 del powerline_setup
+"python3 from powerline.vim import setup as powerline_setup
+"python3 powerline_setup()
+"python3 del powerline_setup
 
-set rtp+=/usr/local/lib/python3.7/dist-packages/powerline/bindings/vim
+"set rtp+=/usr/local/lib/python3.7/dist-packages/powerline/bindings/vim
 
 " Remap Esc so I don't have remove my hand from the home row
 imap jj <Esc>
@@ -38,9 +39,10 @@ set ffs=unix,dos
 set hidden
 
 " Syntastic stuff ********************************************************************
-let g:syntastic_python_checkers=['pylint']
-let g:syntastic_python_pylint_post_args="--max-line-length=120"
-let g:pymode_lint_ignore = "E501,W"
+let g:syntastic_python_checkers=['mypy']
+"let g:syntastic_python_pylint_post_args="--max-line-length=120"
+"let g:pymode_lint = 0
+"let g:pymode_lint_ignore = "E501, W404"
 
 " Bufexplorer  stuff  *********************************************************************
 let g:bufExplorerDetailedHelp = 1
@@ -89,6 +91,11 @@ autocmd InsertLeave * match ExtraWhitespace /\s\+$/
 " highlight matching brackets add ' and " ??
 set matchpairs+=<:>
 
+"let g:kite_auto_complete=1
+"let g:kite_supported_languages = ['python']
+"let g:kite_log=1
+"set statusline=%<%f\ %h%m%r%{kite#statusline()}%=%-14.(%l,%c%V%)\ %P
+"set laststatus=2
 
 " Status/Tab Line **************************************************************
 set showcmd
@@ -291,3 +298,6 @@ endif
 
 " This must be last
 set visualbell t_vb=
+
+
+
